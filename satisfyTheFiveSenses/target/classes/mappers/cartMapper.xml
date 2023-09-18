@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cartMapper">
+	
+	
+	<insert id="regist" parameterType="org.zerock.vo.CartVO" useGeneratedKeys="true" keyProperty="cartNo">
+		<selectKey keyProperty="cartNo" resultType="int" order="BEFORE">
+	    	SELECT CART_SEQ.NEXTVAL FROM DUAL
+	    </selectKey>
+			INSERT INTO TB_CART(
+				CARTNO,
+				USERID,
+				PDNO
+			)
+			VALUES(
+				#{cartNo},
+				#{userId},
+				#{pdNo}
+			)
+	</insert>
+	
+	<insert id="review" parameterType="org.zerock.vo.CartVO" useGeneratedKeys="true" keyProperty="rvNo">
+		<selectKey keyProperty="rvNo" resultType="int" order="BEFORE">
+			SELECT REVIEW_SEQ.NEXTVAL FROM DUAL
+		</selectKey>
+			INSERT INTO TB_REVIEW(
+				RVNO,
+				RVCONTENT,
+				RVSCORE,
+				PDNO,
+				USERID
+			)
+			VALUES(
+				#{rvNo},
+				#{rvContent},
+				#{rvScore},
+				#{pdNo},
+				#{userId}
+			)
+	</insert>
+	
+	
+	<select id="list" resultType="org.zerock.vo.CartVO" parameterType="org.zerock.vo.CartVO">
+		   	SELECT 
+		   		CARTNO,
+		   		A.PDNO,
+		   		PDNAME,	
+		   		PDSIMPLE,
+		   		PDPRICE,
+		   		PDDETAILIMG,
+		   		ORDERDATE,
+		   		CASE WHEN STATE = '1' then '주문완료'
+                     WHEN STATE = '2' then '배송중'
+                     WHEN STATE = '3' then '배송완료'
+                ELSE ''
+                END AS STATE
+		    FROM TB_CART A,
+		    	 TB_PRODUCT B
+		    WHERE A.USERID = #{userId} AND 
+		    	  B.PDNO = A.PDNO AND
+		    	  A.STATE IS NULL
+   </select>
+   
+   <select id="stateList" resultType="org.zerock.vo.CartVO" parameterType="org.zerock.vo.CartVO">
+		   	SELECT 
+		   		CARTNO,
+		   		A.PDNO,
+		   		PDNAME,
+		   		PDSIMPLE,
+		   		PDPRICE,
+		   		PDDETAILIMG,
+		   		ORDERDATE,
+		   		CASE WHEN STATE = '1' then '주문완료'
+                     WHEN STATE = '2' then '배송중'
+                     WHEN STATE = '3' then '배송완료'
+                ELSE ''
+                END AS STATE
+		    FROM TB_CART A,
+		    	 TB_PRODUCT B
+		    WHERE A.USERID = #{userId} AND 
+		    	  B.PDNO = A.PDNO AND
+		    	  A.STATE IS NOT NULL
+   </select>
+   
+   <select id="manageStateList" resultType="org.zerock.vo.CartVO" parameterType="org.zerock.vo.CartVO">
+		   	SELECT 
+		   		CARTNO,
+		   		A.PDNO,
+		   		PDNAME,
+		   		PDSIMPLE,
+		   		ORDERDATE,
+		   		USERID,
+		   		CASE WHEN STATE = '1' then '주문완료'
+                     WHEN STATE = '2' then '배송중'
+                     WHEN STATE = '3' then '배송완료'
+                ELSE ''
+                END AS STATE
+		    FROM TB_CART A,
+		    	 TB_PRODUCT B
+		    WHERE B.PDNO = A.PDNO
+   </select>
+   
+   <update id="send" parameterType="org.zerock.vo.CartVO">
+		UPDATE TB_CART
+		   SET STATE          =   2
+		 WHERE CARTNO = #{cartNo} 
+	</update>
+   
+   <update id="paymentComplete" parameterType="org.zerock.vo.CartVO">
+   			UPDATE
+   				TB_CART
+   			SET
+   				STATE = 1,
+   				ORDERDATE = SYSDATE
+   			WHERE
+   				USERID = #{userId}
+   </update>
+   
+   <update id="confirmBuy" parameterType="org.zerock.vo.CartVO">
+   			UPDATE
+   				TB_CART
+   			SET
+   				STATE = 3,
+   				COMPLEDATE = SYSDATE
+   			WHERE
+   				CARTNO = #{cartNo}
+   </update>
+   
+   <delete id="delete" parameterType="int">
+   			DELETE
+   			FROM TB_CART
+   			WHERE CARTNO = #{cartNo}
+   </delete>
+	
+   
+</mapper>

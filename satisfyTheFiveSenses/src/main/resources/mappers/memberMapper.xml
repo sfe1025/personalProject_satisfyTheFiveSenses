@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="memberMapper">
+	<!-- 회원가입 -->
+	<insert id="register" parameterType="org.zerock.vo.MemberVO">
+	    INSERT INTO TB_USER  ( USERID
+							 , USERPW
+							 , USERNAME
+							 , USERADDRESS1
+							 , USERADDRESS2
+							 , USEREMAIL
+							 , USERPHONE)
+					VALUES(   #{userId}
+							, #{userPw}
+							, #{userName}
+							, #{userAddress1}
+							, #{userAddress2}
+							, #{userEmail}
+							, #{userPhone} )
+    </insert>
+    
+    <!-- 로그인 -->
+    <select id="login" resultType="org.zerock.vo.MemberVO"> 
+    	SELECT USERID, USERPW, USERNAME, USERSTATUS
+    	  FROM TB_USER
+    	 WHERE USERID = #{userId}
+    	   AND USERPW = #{userPw}
+    </select>
+    
+    <select id="mypage" resultType="org.zerock.vo.MemberVO" parameterType="org.zerock.vo.MemberVO">
+    	SELECT
+    		USERID,
+    		USERPW,
+    		USERNAME,
+    		USERADDRESS1,
+    		USERADDRESS2,
+    		USEREMAIL,
+    		USERPHONE
+    	FROM
+    		TB_USER
+    	WHERE
+    		USERID = #{userId} AND
+    		USERPW = #{userPw}
+    </select>
+    
+    
+    <select id="searchId" resultType="org.zerock.vo.MemberVO">
+   			SELECT
+   				USERID
+   			FROM
+   				TB_USER
+   			WHERE
+   				USEREMAIL = #{userEmail}
+    </select>
+    
+    <select id="searchPw" resultType="org.zerock.vo.MemberVO">
+   			SELECT
+   				USERPW
+   			FROM
+   				TB_USER
+   			WHERE
+   				USEREMAIL = #{userEmail} AND
+   				USERID = #{userId}
+    </select>
+    
+    <!-- 회원정보 수정 -->
+    <update id="memberUpdate">
+    	UPDATE TB_USER SET
+    	USERPW = #{userPw},
+    	USERADDRESS1 = #{userAddress1},
+    	USERADDRESS2 = #{userAddress2},
+    	USERPHONE = #{userPhone}
+    	WHERE USERID = #{userId}
+    </update>
+    
+    <!-- 회원탈퇴 -->
+    <delete id="memberDelete">
+    	DELETE FROM TB_USER
+    	WHERE USERID = #{userId}
+    	  AND USERPW = #{userPw}
+    </delete>
+    
+    <!-- 패스워드 체크 -->
+    <select id="passChk" resultType="int">
+    	SELECT COUNT(*) FROM TB_USER
+    	WHERE USERID = #{userId}
+    	  And USERPW = #{userPw}
+    </select>
+    
+    <select id="idChk" resultType="int">
+    	SELECT COUNT(*)
+    	  FROM TB_USER
+    	 WHERE USERID = #{userId}
+    </select>
+    
+   
+</mapper>

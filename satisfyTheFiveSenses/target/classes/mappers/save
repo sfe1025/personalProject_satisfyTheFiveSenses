@@ -1,0 +1,65 @@
+<select id="listPage" resultType="org.zerock.vo.BoardVO" parameterType="org.zerock.vo.Criteria">
+		SELECT  BNO, 
+		        TITLE, 
+		        CONTENT,
+		        WRITER, 
+		        REGDATE
+		 FROM ( 
+		        SELECT BNO, 
+		               TITLE, 
+		               CONTENT, 
+		               WRITER, 
+		               REGDATE, 
+		               ROW_NUMBER() OVER(ORDER BY BNO DESC) AS RNUM
+		         FROM MP_BOARD 
+		                       ) MP
+		WHERE RNUM BETWEEN #{rowStart} AND #{rowEnd}
+		ORDER BY BNO DESC
+	</select>
+	
+	<select id="listPage" resultType="org.zerock.vo.BoardVO" parameterType="org.zerock.vo.SearchCriteria">
+		SELECT  BNO, 
+		        TITLE, 
+		        CONTENT,
+		        CP,
+		        MP,
+		        LOCATION,
+		        WRITER, 
+		        REGDATE
+		 FROM ( 
+		        SELECT BNO, 
+		               TITLE, 
+		               CONTENT,
+		       		   CP,
+		       		   MP,
+		       		   LOCATION, 
+		               WRITER, 
+		               REGDATE, 
+		               ROW_NUMBER() OVER(ORDER BY BNO DESC) AS RNUM
+		         FROM MP_BOARD
+		         WHERE 1=1 
+		         	<include refid="search"></include>
+		                       ) MP
+		WHERE RNUM BETWEEN #{rowStart} AND #{rowEnd}
+		ORDER BY BNO DESC
+	</select>
+	
+	<select id="listCount" resultType="int">
+	<![CDATA[
+		SELECT COUNT(BNO)
+		FROM MP_BOARD
+		WHERE BNO > 0
+	]]>
+	</select>
+	
+	<insert id="insert">
+	   INSERT INTO MP_BOARD(    BNO 
+	   					      , TITLE 
+	   					      , CONTENT 
+	   					      , WRITER  )
+	                 VALUES(    MP_BOARD_SEQ.NEXTVAL 
+	                 		  , #{title}
+	                 		  , #{content}
+	                 		  , #{writer}  )
+   
+   </insert>

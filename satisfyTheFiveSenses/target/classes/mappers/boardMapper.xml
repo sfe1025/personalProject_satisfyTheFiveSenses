@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="boardMapper">
+	<!-- 게시판 글 작성 -->
+   <insert id="insert">
+	   INSERT INTO TB_BOARD(    BOARDNO
+	   					      , TITLE 
+	   					      , CONTENT
+	   					      , REGDATE
+	   					      , USERID  )
+	                 VALUES(    TB_BOARD_SEQ.NEXTVAL
+	                 		  , #{title}
+	                 		  , #{content}
+	                 		  , SYSDATE
+	                 		  , #{userId}  )
+   
+   </insert>
+   
+    <!-- 풀품 등록-->
+   <insert id="pdInsert" parameterType="java.util.Map" useGeneratedKeys="true" keyProperty="pdNo">
+	    <selectKey keyProperty="pdNo" resultType="int" order="BEFORE">
+	    	SELECT PD_SEQ.NEXTVAL FROM DUAL
+	    </selectKey>
+	   INSERT INTO TB_PRODUCT(    PDNO 
+	   						  , PDNAME
+	   						  , PDCATEGORY
+	   					      , PDSIMPLE
+	   					      , PDDETAIL
+	   					      , PDSTOCK
+	   					      , PDPRICE
+	   					      , PDDETAILIMG )
+	                 VALUES(    #{pdNo} 
+	                 		  , #{pdName}
+	                 		  , #{pdCategory}
+	                 		  , #{pdSimple}
+	                 		  , #{pdDetail}
+	                 		  , #{pdStock}
+	                 		  , #{pdPrice}
+	                 		  , #{img}  )
+   </insert>
+   
+   <select id="listPageTemp" resultType="org.zerock.vo.BoardVO">
+		SELECT  PDNO,
+				PDNAME,
+				PDCATEGORY,
+				PDSIMPLE,
+				PDPRICE,
+				PDSCORE,
+				PDDETAILIMG
+		 FROM   TB_PRODUCT
+		 WHERE  PDNAME LIKE '%' || #{pdName} || '%'
+		ORDER BY PDNO DESC
+	</select>
+   
+   <select id="listPage" resultType="org.zerock.vo.BoardVO" parameterType="org.zerock.vo.SearchCriteria">
+		SELECT  PDNO,
+				PDNAME,
+				PDCATEGORY,
+				PDSIMPLE,
+				PDPRICE,
+				PDSCORE,
+				PDDETAILIMG
+		 FROM   TB_PRODUCT
+		 WHERE  PDCATEGORY = #{pdCategory} 
+		ORDER BY PDNO DESC
+	</select>
+	
+	<select id="customerServiceListPage" resultType="org.zerock.vo.BoardVO" parameterType="org.zerock.vo.Criteria">
+		SELECT BOARDNO,
+			   TITLE,
+			   CONTENT,
+			   USERID,
+			   REGDATE
+		FROM ( 
+		SELECT BOARDNO,
+			   TITLE,
+			   CONTENT,
+			   USERID,
+			   REGDATE,
+    		   ROW_NUMBER() OVER(ORDER BY BOARDNO DESC) AS RNUM
+   		FROM TB_BOARD)
+		WHERE RNUM BETWEEN #{rowStart} AND #{rowEnd}	
+		ORDER BY BOARDNO DESC
+	</select>
+	
+	<select id="customerServiceListCount" resultType="int">
+	<![CDATA[
+		SELECT COUNT(BOARDNO)
+		FROM TB_BOARD
+		WHERE BOARDNO > 0
+	]]>
+	</select>
+	
+	<select id="manageStockList" resultType="org.zerock.vo.BoardVO">
+		   	SELECT 
+		   		PDNO,
+		   		PDNAME,
+		   		PDCATEGORY,
+		   		PDSTOCK
+		    FROM TB_PRODUCT
+		    <![CDATA[WHERE PDSTOCK < 4]]>
+   </select>
+   
+  
+	
+	<select id="rListCount" parameterType="org.zerock.vo.SearchCriteria" resultType="int">
+		SELECT COUNT(BNO)
+		   FROM MP_REC_BOARD
+		   WHERE 1=1
+		<include refid="search"></include>	
+		   AND BNO > 0
+	</select>
+	
+	<select id="rListPage" resultType="org.zerock.vo.BoardVO" parameterType="org.zerock.vo.SearchCriteria">
+		SELECT  BNO, 
+		        SHOPNAME,
+		        LOCATION, 
+		        CONTENT,
+		        WRITER,
+		        SCORE,
+		        REGDATE
+		 FROM ( 
+		        SELECT BNO, 
+		               SHOPNAME, 
+		               LOCATION,
+		               CONTENT, 
+		               WRITER,
+		               SCORE, 
+		               REGDATE, 
+		               ROW_NUMBER() OVER(ORDER BY BNO DESC) AS RNUM
+		         FROM MP_REC_BOARD
+		         WHERE 1=1 
+		         	<include refid="search"></include>
+		                       ) MP
+		WHERE RNUM BETWEEN #{rowStart} AND #{rowEnd}
+		ORDER BY BNO DESC
+	</select>
+	
+	<select id="listCount" parameterType="org.zerock.vo.SearchCriteria" resultType="int">
+		SELECT COUNT(BNO)
+		   FROM MP_BOARD
+		   WHERE 1=1
+		<include refid="search"></include>	
+		   AND BNO > 0
+	</select>
+   
+   <select id="read" resultType="org.zerock.vo.BoardVO">
+   	SELECT BOARDNO
+   		 , TITLE
+   		 , CONTENT
+   		 , USERID
+   		 , REGDATE
+    FROM TB_BOARD
+    WHERE BOARDNO = #{boardNo}
+   </select>
+   
+   <update id="update" parameterType="org.zerock.vo.BoardVO">
+		UPDATE MP_BOARD
+		   SET TITLE    =   #{title},
+		   	   CONTENT  =   #{content},
+		   	   MP 		=   #{mp},
+		   	   LOCATION =   #{location}
+		 WHERE BNO = #{bno} 
+	</update>
+	
+	<delete id="delete" parameterType="int">
+		DELETE 
+		  FROM MP_BOARD
+		 WHERE BNO = #{bno}
+	</delete>
+	
+	<select id="readRec" resultType="org.zerock.vo.BoardVO">
+   	SELECT BNO
+   		 , SHOPNAME
+   		 , LOCATION
+   		 , CONTENT
+   		 , WRITER
+   		 , SCORE
+   		 , REGDATE
+    FROM MP_REC_BOARD
+    WHERE BNO = #{bno}
+   </select>
+   
+   <update id="updateRec" parameterType="org.zerock.vo.BoardVO">
+		UPDATE MP_REC_BOARD
+		   SET SHOPNAME    =   #{shopName},
+		       LOCATION    =   #{location},
+		   	   CONTENT     =   #{content}
+		 WHERE BNO = #{bno} 
+	</update>
+	
+	<update id="join" parameterType="org.zerock.vo.BoardVO">
+		UPDATE MP_BOARD
+		   SET CP          =   CP + 1
+		 WHERE BNO = #{bno} 
+	</update>
+	
+	<delete id="deleteRec" parameterType="int">
+		DELETE 
+		  FROM MP_REC_BOARD
+		 WHERE BNO = #{bno}
+	</delete>
+	
+	<delete id="deletePd" parameterType="org.zerock.vo.BoardVO">
+		DELETE 
+		  FROM TB_PRODUCT
+		 WHERE PDNO = #{pdNo}
+	</delete>
+    
+    <insert id="insertRecFile" parameterType="hashMap">
+		INSERT INTO MP_REC_FILE(
+			FILE_NO,
+			BNO,
+			ORG_FILE_NAME,
+			STORED_FILE_NAME,
+			FILE_SIZE
+		)VALUES(
+			SEQ_MP_REC_FILE_NO.NEXTVAL,
+			#{BNO},
+			#{ORG_FILE_NAME},
+			#{STORED_FILE_NAME},
+			#{FILE_SIZE}
+		)
+    </insert>
+    
+    <insert id="insertSimpleImg" parameterType="hashMap">
+		INSERT INTO TB_FILE(
+			FILE_NO,
+			PDNO,
+			ORG_FILE_NAME,
+			STORED_FILE_NAME,
+			FILE_SIZE
+		)VALUES(
+			SEQ_TB_FILE_NO.NEXTVAL,
+			#{PDNO},
+			#{ORG_FILE_NAME},
+			#{STORED_FILE_NAME},
+			#{FILE_SIZE}
+		)
+    </insert>
+    
+    <!-- 맛집추천 첨부파일 조회 -->
+	<select id="selectRecFileList" parameterType="int" resultType="hashMap">
+		SELECT FILE_NO,
+			   ORG_FILE_NAME,
+			   ROUND(FILE_SIZE/1024,1) AS FILE_SIZE
+		  FROM MP_REC_FILE
+		 WHERE BNO = #{BNO}
+		   AND DEL_GB = 'N'
+    	 ORDER BY FILE_NO ASC
+	</select>
+	
+	<!-- 첨부파일 조회 -->
+	<select id="selectFileList" parameterType="int" resultType="hashMap">
+		SELECT FILE_NO,
+			   ORG_FILE_NAME,
+			   ROUND(FILE_SIZE/1024,1) AS FILE_SIZE
+		  FROM MP_REC_FILE
+		 WHERE BNO = #{BNO}
+		   AND DEL_GB = 'N'
+	</select>
+	
+	<!-- 첨부파일 다운 -->
+	<select id="selectRecFileInfo" parameterType="hashMap" resultType="hashMap">
+		SELECT 
+			STORED_FILE_NAME,
+			ORG_FILE_NAME
+		FROM MP_REC_FILE
+		WHERE FILE_NO = #{FILE_NO}
+	</select>
+	
+	<update id="updateRecFile" parameterType="hashMap">
+    	UPDATE MP_REC_FILE SET
+    	DEL_GB = 'Y'
+    	WHERE FILE_NO = #{FILE_NO}
+    </update>
+    
+    <insert id="saveImage" parameterType="java.util.Map">
+	INSERT INTO TB_PRODUCT(
+		PDIMG
+	)
+	 VALUES(
+		#{img}
+	 )	
+	</insert>
+	
+	
+   
+   <sql id="search">
+		<if test="searchType != null">
+			<if test="searchType == 't'.toString()">AND TITLE LIKE '%' || #{keyword} || '%'</if>
+			<if test="searchType == 'c'.toString()">AND CONTENT LIKE '%' || #{keyword} || '%'</if>
+			<if test="searchType == 'w'.toString()">AND WRITER LIKE '%' || #{keyword} || '%'</if>
+			<if test="searchType == 'tc'.toString()">AND (TITLE LIKE '%' || #{keyword} || '%') or (CONTENT LIKE '%' || #{keyword} || '%')</if>
+		</if>
+	</sql>
+   
+</mapper>
